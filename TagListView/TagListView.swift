@@ -189,6 +189,12 @@ open class TagListView: UIView {
             }
         }
     }
+
+    @IBInspectable open dynamic var preferredLayoutWidth: CGFloat = -1 {
+        didSet {
+            rearrangeViews()
+        }
+    }
     
     @objc open dynamic var textFont: UIFont = .systemFont(ofSize: 12) {
         didSet {
@@ -233,6 +239,8 @@ open class TagListView: UIView {
         }
         rowViews.removeAll(keepingCapacity: true)
 
+        let layoutWidth = preferredLayoutWidth >= 0 ? preferredLayoutWidth : frame.width
+
         var isRtl: Bool = false
         
         if #available(iOS 10.0, tvOS 10.0, *) {
@@ -268,7 +276,7 @@ open class TagListView: UIView {
             tagView.frame.size = tagView.intrinsicContentSize
             tagViewHeight = tagView.frame.height
             
-            if currentRowTagCount == 0 || currentRowWidth + tagView.frame.width > frameWidth {
+            if currentRowTagCount == 0 || currentRowWidth + tagView.frame.width > layoutWidth {
                 currentRow += 1
                 currentRowWidth = 0
                 currentRowTagCount = 0
@@ -279,7 +287,7 @@ open class TagListView: UIView {
                 rowViews.append(currentRowView)
                 addSubview(currentRowView)
 
-                tagView.frame.size.width = min(tagView.frame.size.width, frameWidth)
+                tagView.frame.size.width = min(tagView.frame.size.width, layoutWidth)
             }
             
             let tagBackgroundView = tagBackgroundViews[index]
@@ -304,10 +312,10 @@ open class TagListView: UIView {
             case .left:
                 currentRowView.frame.origin.x = 0
             case .center:
-                currentRowView.frame.origin.x = (frameWidth - (currentRowWidth - marginX)) / 2
+                currentRowView.frame.origin.x = (layoutWidth - (currentRowWidth - marginX)) / 2
             case .trailing: fallthrough // switch must be exahutive
             case .right:
-                currentRowView.frame.origin.x = frameWidth - (currentRowWidth - marginX)
+                currentRowView.frame.origin.x = layoutWidth - (currentRowWidth - marginX)
             }
             currentRowView.frame.size.width = currentRowWidth
             currentRowView.frame.size.height = max(tagViewHeight, currentRowView.frame.height)
@@ -324,7 +332,9 @@ open class TagListView: UIView {
         if rows > 0 {
             height -= marginY
         }
-        return CGSize(width: frame.width, height: height)
+        let width = rowViews.map({ $0.frame.width }).sorted().last ?? 0.0
+
+        return CGSize(width: width, height: height)
     }
     
     private func createNewTagView(_ title: String) -> TagView {
